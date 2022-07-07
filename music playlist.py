@@ -48,3 +48,4 @@ with open(f'C:/bashi/playlists/generated/music {date.today()}.txt', 'xb') as fp:
     fp.write('\n'.join(parejas).encode('UTF-8'))
 
 print('<<music file created successfully>>')
+# test git
