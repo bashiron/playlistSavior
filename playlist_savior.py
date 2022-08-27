@@ -56,8 +56,7 @@ class Savior:
             numeracion.append(f'{num}) ')
             num += 1
 
-        # newlines = ['\n' for x in numeracion]
-        parejas = tuple(zip(numeracion, titulos))
+        parejas = zip(numeracion, titulos)
         parejas = list(map(lambda x: ''.join(x), parejas))
 
         with open(f'C:/bashi/playlists/generated/{nombre} {date.today()}.txt', 'xb') as fp:

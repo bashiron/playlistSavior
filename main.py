@@ -1,14 +1,14 @@
-from playlist_savior import SMASH, MUSIC, FAVS, Savior
+from datetime import date
+from playlist_savior import Savior, SMASH, MUSIC, FAVS
 
-def diarias():
+def salvar():
     savior = Savior()
-    savior.save_playlist(SMASH)
-    savior.save_playlist(MUSIC)
-
-def semanales():
-    savior = Savior()
-    savior.save_playlist(FAVS)
+    pls = [SMASH, MUSIC]
+    if date.today().weekday() == 6:
+        pls.append(FAVS)
+    for pl in pls:
+        savior.save_playlist(pl)
 
 
 if __name__ == "__main__":
-    diarias()
+    salvar()
