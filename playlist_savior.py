@@ -59,7 +59,7 @@ class Savior:
         parejas = zip(numeracion, titulos)
         parejas = list(map(lambda x: ''.join(x), parejas))
 
-        with open(f'C:/bashi/playlists/generated/{nombre} {date.today()}.txt', 'xb') as fp:
+        with open(f'/home/bashiron/bashi/playlists/generated/{nombre} {date.today()}.txt', 'xb') as fp:
             fp.write('\n'.join(parejas).encode('UTF-8'))
 
         print(f'<<{nombre} file created successfully>>')
