@@ -1,4 +1,4 @@
-import os
+import os, psycopg
 from googleapiclient.discovery import build
 from datetime import date
 from functools import partial
@@ -23,6 +23,8 @@ class Savior:
         titulos = self.obtain_titles(tipo['id'])
         self.save_titles(titulos, tipo['name'])
 
+    # TODO fetch video tags (snippet.tags[])
+    # TODO fetch cahnnel title (snippet.channelTitle)
     def obtain_titles(self, pl_id):
         titulos = []
         next_token = False
@@ -38,6 +40,7 @@ class Savior:
                 id=','.join(vid_ids)
             )
 
+            print('requesting videos...')
             vid_response = vid_request.execute()
             for item in vid_response['items']:
                 titulos.append(item['snippet']['title'])
@@ -59,7 +62,7 @@ class Savior:
         parejas = zip(numeracion, titulos)
         parejas = list(map(lambda x: ''.join(x), parejas))
 
-        with open(f'/home/bashiron/bashi/playlists/generated/{nombre} {date.today()}.txt', 'xb') as fp:
+        with open(f'/home/bashiron/playlists/generated/{nombre} {date.today()}.txt', 'xb') as fp:
             fp.write('\n'.join(parejas).encode('UTF-8'))
 
         print(f'<<{nombre} file created successfully>>')

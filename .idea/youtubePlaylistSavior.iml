@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/youtubesavior-env" />
       <excludeFolder url="file://$MODULE_DIR$/blog-env" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.10 (youtubePlaylistSavior)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
