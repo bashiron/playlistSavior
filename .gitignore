@@ -189,3 +189,5 @@ fabric.properties
 # vvv --- custom --- vvv
 
 prueba.py
+logtest.py
+

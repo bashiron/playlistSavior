@@ -1,7 +1,7 @@
 from datetime import date
 from playlist_savior import Savior, SMASH, MUSIC, FAVS
 
-def salvar():
+def save():
     savior = Savior()
     pls = [SMASH, MUSIC]
     if date.today().weekday() == 6:
@@ -11,4 +11,4 @@ def salvar():
 
 
 if __name__ == "__main__":
-    salvar()
+    save()
