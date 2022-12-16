@@ -22,6 +22,8 @@ FAVS = {'name': 'favs', 'id': favs_id}
 class Savior:
 
     def init_and_save(self, pl):
+        logger.info('received request to save {} playlist', pl['name'], kind='playlist')
+        logger.debug('connecting to postgres...', kind='regular')
         with psycopg.connect('dbname=playlist user=bashiron') as conn:
             with conn.cursor() as cursor:
                 self.save(pl, cursor)
@@ -44,6 +46,7 @@ class Savior:
         # thumbnail <- snippet.thumbnails.medium.url TODO dont set thumbnail yet, i have to find a way to grab the pic binary from the url and store it
 
         next_token = False
+        page = 1
         part_request = partial(youtube.playlistItems().list, part='contentDetails', playlistId=pl['id'], maxResults=50)
 
         while True:
@@ -56,11 +59,12 @@ class Savior:
                 id=','.join(vid_ids)
             )
 
-            logger.debug('requesting videos...', kind='regular')
+            logger.debug('requesting raw video data... | page {}', page, kind='regular')
             vid_response = vid_request.execute()
             self.insert_data(cursor, pl, vid_response['items'])
 
             next_token = pl_response.get('nextPageToken')
+            page += 1
             if not next_token:
                 break
 
@@ -73,7 +77,8 @@ class Savior:
         :param items: api video objects
         """
         for item in items:
-            snp = item['snippet']
+            logger.info('<{}>', item['snippet']['title'], kind='display')
+            snp = self.improve_snippet(item['snippet'])
             cdt = item['contentDetails']
             try:
                 cursor.execute(
@@ -86,16 +91,24 @@ class Savior:
                                 END
                         RETURNING id
                     ''',
-                    (snp['title'], pl['name'], item['id'], cdt['duration'])
+                    (snp['title'], [pl['name']], item['id'], cdt['duration'])
                 )
             except psycopg.errors.Error:
                 raise Exception('error')
             else:  # the insertion succeded which means it either created a new entry or updated the `playlist` on an existing one
-                vid_id = cursor.fetchone()  # grab the returned auto-gen id
+                vid_id = cursor.fetchone()[0]  # grab the returned auto-gen id
                 cursor.execute(
-                    ''' INSERT INTO "MetaRaw" (id, title, description, tags, upload_date, channel)
+                    ''' INSERT INTO "MetaRaw" (vid_id, title, description, tags, upload_date, channel)
                         VALUES (%s, %s, %s, %s, %s, %s)
                         ON CONFLICT (vid_id) DO NOTHING
                     ''',
                     (vid_id, snp['title'], snp['description'], snp['tags'], snp['publishedAt'], snp['channelTitle'])
                 )
+
+    def improve_snippet(self, snp):
+        try:
+            fixed_tags = snp['tags']
+        except KeyError:
+            fixed_tags = ['<none>']
+        snp['tags'] = ', '.join(fixed_tags)[0:499]
+        return snp
