@@ -7,7 +7,7 @@ def save():
     if date.today().weekday() == 6:
         pls.append(FAVS)
     for pl in pls:
-        savior.save_playlist(pl)
+        savior.init_and_save(pl)
 
 
 if __name__ == "__main__":
