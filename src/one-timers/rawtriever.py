@@ -4,7 +4,7 @@ from functools import partial
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 
-from log_prep import *
+from src.log_prep import *
 
 load_dotenv()
 api_key = os.environ["DEV_KEY"]
