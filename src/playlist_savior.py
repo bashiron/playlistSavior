@@ -19,12 +19,14 @@ SMASH = {'name': 'smash', 'id': smash_id}
 MUSIC = {'name': 'music', 'id': music_id}
 FAVS = {'name': 'favs', 'id': favs_id}
 
+conn_conf = {'dbname': 'playlist', 'user': 'bashiron'}
+
 class Savior:
 
     def init_and_save(self, pl):
         logger.info('received request to save {} playlist', pl['name'], kind='playlist')
         logger.debug('connecting to postgres...', kind='regular')
-        with psycopg.connect('dbname=playlist user=bashiron') as conn:
+        with psycopg.connect("dbname={} user={}".format(conn_conf['dbname'], conn_conf['user'])) as conn:
             with conn.cursor() as cursor:
                 self.save(pl, cursor)
 
