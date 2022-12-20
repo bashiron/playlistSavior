@@ -13,28 +13,9 @@ class MockDB(TestCase):
     def setUpClass(cls):
         # drop database if it already exists
         sub.run(f'dropdb {db}', shell=True, text=True)
-        # conn = psycopg.connect(f'dbname=postgres user={user}')
-        # cursor = conn.cursor()
-        # try:
-        #     cursor.execute("DROP DATABASE {}".format(db))
-        #     cursor.close()
-        #     conn.close()
-        #     print("DB dropped")
-        # except psycopg.Error as err:
-        #     print("{} - {}".format(db, err))
 
         # create database
         sub.run(f'createdb {db}', shell=True, text=True)
-        # conn = psycopg.connect(f'dbname=postgres user={user}')
-        # cursor = conn.cursor()
-        # try:
-        #     cursor.execute(
-        #         "CREATE DATABASE {} WITH ENCODING 'UTF8'".format(db))
-        #     cursor.close()
-        #     conn.close()
-        # except psycopg.Error as err:
-        #     print("Failed creating database: {}".format(err))
-        #     exit(1)
 
         # create database structure
         sub.run(f'pg_dump playlist -s | psql {db}', shell=True, text=True, capture_output=True)
@@ -64,12 +45,3 @@ class MockDB(TestCase):
 
         # drop test database
         sub.run(f'dropdb {db}', shell=True, text=True)
-        # conn = psycopg.connect(f'dbname={db} user={user}')
-        # cursor = conn.cursor()
-        # try:
-        #     cursor.execute('DROP DATABASE {}'.format(db))
-        #     conn.commit()
-        #     cursor.close()
-        # except psycopg.Error as err:
-        #     print("Database {} does not exist. Dropping db failed".format(db))
-        # conn.close()
