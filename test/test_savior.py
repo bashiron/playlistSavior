@@ -1,12 +1,20 @@
-import playlist_savior
+from playlist_savior import *
 from mockdb import MockDB
 from unittest.mock import patch
 
-class TestUtils(MockDB):
+db = 'test_playlist'
+user = 'bashiron'
+
+class TestSavior(MockDB):
 
     def test_db_write(self):
         with self.mock_db_config:
-            self.assertEqual(1, 1)
+            savior = Savior()
+            with psycopg.connect(f'dbname={db} user={user}') as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute('SELECT * FROM "Videos"')
+                    vids = cursor.fetchall()
+                    self.assertTrue(True)
 
     def test_db_read(self):
         with self.mock_db_config:

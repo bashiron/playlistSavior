@@ -4,7 +4,7 @@ from functools import partial
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 
-from log_prep import *
+from src.log_prep import *
 
 load_dotenv()
 api_key = os.environ["DEV_KEY"]
@@ -114,3 +114,6 @@ class Savior:
             fixed_tags = ['<none>']
         snp['tags'] = ', '.join(fixed_tags)[0:499]
         return snp
+
+def add_playlist(pl):
+    pass

@@ -24,11 +24,23 @@ class MockDB(TestCase):
         conn = psycopg.connect(f'dbname={db} user={user}')
         cursor = conn.cursor()
         try:
-            cursor.execute(
+            data = [
+                ('Incursione', '{smash}', '{ost}'),
+                ('Minagiru Chikara', '{smash}', '{ost}'),
+                ('in the blue shirt', '{music}', '{music}'),
+                ('Dark Souls 2: All Over Now', '{favs}', '{none}'),
+                ("il vento d'oro", '{music}', '{music}')
+            ]
+            # en_data holds the values in data but adds a "counter" as the first item
+            en_data = []
+            for n in range(1, len(data)):
+                en_data.append(tuple([str(n)] + list(data[n])))
+
+            cursor.executemany(
                 ''' INSERT INTO "Videos" (id, name, playlist, category)
                     VALUES (%s, %s, %s, %s)
                 ''',
-                (1, 'Incursione', '{smash}', '{ost}')
+                en_data
             )
             conn.commit()
         except psycopg.Error as err:
