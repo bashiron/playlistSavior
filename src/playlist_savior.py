@@ -1,5 +1,6 @@
 import os, psycopg
 from functools import partial
+from collections.abc import Callable
 
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
@@ -23,17 +24,69 @@ conn_conf = {'dbname': 'playlist', 'user': 'bashiron'}
 
 class Savior:
 
-    def init_and_save(self, pl):
-        logger.info('received request to save {} playlist', pl['name'], kind='playlist')
+    def run_db_op(self, op: Callable[[psycopg.Cursor], None]):
+        """Run a Savior database operation by first initializing the connection vars and then passing them to the op.
+
+        Examples
+        -----
+        Run the `save` function:
+
+        >>> Savior.run_db_op(partial(Savior.save, pls=['smash', 'music']))
+        None
+
+        Parameters
+        -----
+        op
+            Database operation to execute. Partial function with every argument except 'cursor' already defined.
+
+        """
         logger.debug('connecting to postgres...', kind='regular')
         with psycopg.connect("dbname={} user={}".format(conn_conf['dbname'], conn_conf['user'])) as conn:
             with conn.cursor() as cursor:
-                self.save(pl, cursor)
+                op(cursor)
 
-    def save(self, pl, cursor):
+    # def init_and_save(self, pl):
+    #     logger.debug('connecting to postgres...', kind='regular')
+    #     with psycopg.connect("dbname={} user={}".format(conn_conf['dbname'], conn_conf['user'])) as conn:
+    #         with conn.cursor() as cursor:
+    #             self.save(pl, cursor)
+
+    def save(self, pls, cursor):
+        """Perform the main save operation. Naturally saves every playlist in the database but has the option to save only
+        the ones specified by the `pls` argument.
+
+        Parameters
+        -----
+        pls : `list`
+            Playlists to be saved and ONLY these will be saved. Empty list to save every playlist in db.
+        cursor : `psycopg.Cursor`
+            Postgres cursor.
+        """
+        match pls:
+            case []:
+                # save everything
+                fetched_pls = cursor.execute('SELECT * FROM "Playlists"').fetchall()
+                fetched_pls = list(map(lambda t: {'name': t[0], 'id': t[1]}, fetched_pls))
+                for pl in fetched_pls:
+                    self.save_playlist(pl, cursor)
+
+            case _:
+                # save only listed playlists
+                # TODO how do i grab all specified pls? i think using `WHERE name = .. OR .. OR ..` works
+                fetched_pls = cursor.execute('SELECT * FROM "Playlists" WHERE name = ').fetchall()    #TODO incomplete
+                fetched_pls = list(map(lambda t: {'name': t[0], 'id': t[1]}, fetched_pls))
+                for pl in fetched_pls:
+                    self.save_playlist(pl, cursor)
+
+    def save_playlist(self, pl, cursor):
         """Fetch video data from playlist and store in database.
-        :param pl: playlist to store videos from
-        :param cursor: postgres cursor
+
+        Parameters
+        -----
+        pl : `dict`
+            Playlist to store video data from.
+        cursor : `psycopg.Cursor`
+            Postgres cursor.
         """
         # name <- snippet.title
         # playlist <- set from the pl.name
@@ -47,6 +100,7 @@ class Savior:
         # channel <- snippet.channelTitle
         # thumbnail <- snippet.thumbnails.medium.url TODO dont set thumbnail yet, i have to find a way to grab the pic binary from the url and store it
 
+        logger.info('received request to save {} playlist', pl['name'], kind='playlist')
         next_token = False
         page = 1
         part_request = partial(youtube.playlistItems().list, part='contentDetails', playlistId=pl['id'], maxResults=50)
@@ -63,20 +117,26 @@ class Savior:
 
             logger.debug('requesting raw video data... | page {}', page, kind='regular')
             vid_response = vid_request.execute()
-            self.insert_data(cursor, pl, vid_response['items'])
+            self.insert_data(pl, vid_response['items'], cursor)
 
             next_token = pl_response.get('nextPageToken')
             page += 1
             if not next_token:
                 break
 
-    def insert_data(self, cursor, pl, items):
+    def insert_data(self, pl, items, cursor):
         """Insert video data into "Videos" and "MetaRaw". If an entry with that `apvid` (video id inside youtube) already exists
         it updates the `playlist` column to also include the one where the video was found in, this is because a video can be
         in several playlists.
-        :param cursor: postgres cursor
-        :param pl: playlist to store videos from
-        :param items: api video objects
+
+        Parameters
+        -----
+        pl : `dict`
+            Playlist to store videos from.
+        items : `dict`
+            Api video objects.
+        cursor : `psycopg.Cursor`
+            Postgres cursor.
         """
         for item in items:
             logger.info('<{}>', item['snippet']['title'], kind='display')
@@ -115,5 +175,7 @@ class Savior:
         snp['tags'] = ', '.join(fixed_tags)[0:499]
         return snp
 
-def add_playlist(pl):
-    pass
+    def add_playlist(self, pl, cursor):
+        """Takes playlist (dict with name and id) and saves it to database
+        """
+        cursor.execute('INSERT INTO "Playlists" (name, aplid) VALUES (%s, %s)', (pl['name'], pl['id']))

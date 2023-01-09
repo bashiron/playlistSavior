@@ -1,6 +1,9 @@
-import click
+import click, re
+from functools import partial
 
 from src.playlist_savior import Savior
+
+savior = Savior()
 
 @click.group()
 def cli():
@@ -8,7 +11,9 @@ def cli():
 
 @cli.command()
 def setup():
-    click.echo('Let''s start setting up')
+    """Perform first-time setup. You will be asked for data necessary to operate
+    """
+    click.echo("Let's start setting up")
     api_key = click.prompt('Input your personal Youtube API key')
     with open('/home/bashiron/bashi/projects/youtubePlaylistSavior/.env', 'wt', encoding='utf-8') as env:
         env.write('DEV_KEY=%s' % api_key)
@@ -18,14 +23,34 @@ def setup():
         # proceed with add_playlist function
         # i think i can use click.Context.invoke() - https://click.palletsprojects.com/en/8.1.x/advanced/#invoking-other-commands
         pass
+    else:
+        click.echo('setup complete')
 
 @cli.command()
 @click.argument('name', nargs=1)
 @click.argument('url', nargs=1)
 def add_playlist(name, url):
-    print(f'save playlist {name} with url {url}')
+    """Add a playlist to the database by providing a name and a url
+    """
+    pl_id = re.search(r"(?<==)(.*)", url).group(1)
+    savior.run_db_op(partial(savior.add_playlist, pl={'name': name, 'id': pl_id}))
+    click.echo(f'playlist id is {pl_id}')
 
-
+@cli.command()
+@click.option('-p', '--playlists', 'f_pls', is_flag=True, help='flag that indicates whether to save only specified playlists')
+@click.argument('pls', type=str, nargs=-1)
+def save(f_pls, pls):
+    """Save all playlists's data or only the ones defined in the arguments\n
+    The arguments should contain the playlists to save while ignoring others
+    """
+    click.echo('saving %s' % 'all playlists' if not f_pls else 'specified playlists')
+    final_pls = pls if f_pls else []
+    try:
+        savior.run_db_op(partial(savior.save, pls=final_pls))
+    except:
+        click.echo('error in operation')
+    else:
+        click.echo('operation successful')
 
 
 
