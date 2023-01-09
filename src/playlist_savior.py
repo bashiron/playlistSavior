@@ -31,7 +31,7 @@ class Savior:
         -----
         Run the `save` function:
 
-        >>> Savior.run_db_op(partial(Savior.save, pls=['smash', 'music']))
+        >>> Savior.run_db_op(partial(Savior.save, ['smash', 'music']))
         None
 
         Parameters
@@ -57,7 +57,7 @@ class Savior:
 
         Parameters
         -----
-        pls : `list`
+        pls : `list` of `str`
             Playlists to be saved and ONLY these will be saved. Empty list to save every playlist in db.
         cursor : `psycopg.Cursor`
             Postgres cursor.
@@ -72,8 +72,7 @@ class Savior:
 
             case _:
                 # save only listed playlists
-                # TODO how do i grab all specified pls? i think using `WHERE name = .. OR .. OR ..` works
-                fetched_pls = cursor.execute('SELECT * FROM "Playlists" WHERE name = ').fetchall()    #TODO incomplete
+                fetched_pls = cursor.execute('SELECT * FROM "Playlists" WHERE name = ANY(%s)', [pls]).fetchall()
                 fetched_pls = list(map(lambda t: {'name': t[0], 'id': t[1]}, fetched_pls))
                 for pl in fetched_pls:
                     self.save_playlist(pl, cursor)

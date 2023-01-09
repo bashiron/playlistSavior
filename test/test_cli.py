@@ -1,3 +1,6 @@
+import os.path
+
+from definitions import PROJECT_ROOT
 from cli import cli
 from unittest import TestCase
 from click.testing import CliRunner
@@ -10,6 +13,9 @@ class TestCLI(TestCase):
         inp_1 = 'blablabla'
         inp_2 = 'N'
         res = runner.invoke(cli, ['setup'], input='\n'.join([inp_1, inp_2]))
+        env = open(os.path.join(PROJECT_ROOT, '.env'), 'rt', encoding='utf-8')
+        assert env.readline() == 'DEV_KEY=%s' % inp_1
+        env.close()
         assert res.exit_code == 0
         assert 'setup complete' in res.output
 

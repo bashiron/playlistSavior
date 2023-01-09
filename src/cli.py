@@ -44,13 +44,15 @@ def save(f_pls, pls):
     The arguments should contain the playlists to save while ignoring others
     """
     click.echo('saving %s' % 'all playlists' if not f_pls else 'specified playlists')
-    final_pls = pls if f_pls else []
-    try:
-        savior.run_db_op(partial(savior.save, pls=final_pls))
-    except:
-        click.echo('error in operation')
-    else:
-        click.echo('operation successful')
+    final_pls = list(pls) if f_pls else []
+    savior.run_db_op(partial(savior.save, final_pls))
+    # try:
+    #     savior.run_db_op(partial(savior.save, final_pls))
+    # except Exception as exc:
+    #     click.echo('error in operation')
+    #     raise exc
+    # else:
+    #     click.echo('operation successful')
 
 
 
