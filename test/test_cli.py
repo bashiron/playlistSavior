@@ -7,7 +7,13 @@ from click.testing import CliRunner
 
 class TestCLI(TestCase):
 
-    # TODO dont call setup without first backing up the `.env` file
+    def test_integral_cli(self):
+        """Test multiple cli commands and their impact on each other, simulating a typical use case.
+        """
+        runner = CliRunner()
+        # ...
+
+    # TODO dont call setup without first backing up the `.env` file. Or make the cli read the file name from a module variable and patch that for the tests
     def test_setup(self):
         runner = CliRunner()
         inp_1 = 'blablabla'

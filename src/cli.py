@@ -37,6 +37,22 @@ def add_playlist(name, url):
     click.echo(f'playlist id is {pl_id}')
 
 @cli.command()
+def multi_add_playlist():
+    """Add multiple playlists to the database interactively
+    """
+    click.echo('''Started interactive playlist creation\nUse names that are easy to type and remember, it doesn't need to be
+    the real playlist name on Youtube\nFor the URL just copy and paste the playlist URL as it shows on Youtube''')
+    pls = []
+    while True:
+        name = click.prompt('Type the playlist name')
+        url = click.prompt('Type the playlist URL')
+        pl_id = re.search(r"(?<==)(.*)", url).group(1)
+        pls.append((name, pl_id))
+        if not click.confirm('Add more?', default=True):
+            break
+    savior.run_db_op(partial(savior.add_multi_playlist, pls))
+
+@cli.command()
 @click.option('-p', '--playlists', 'f_pls', is_flag=True, help='flag that indicates whether to save only specified playlists')
 @click.argument('pls', type=str, nargs=-1)
 def save(f_pls, pls):

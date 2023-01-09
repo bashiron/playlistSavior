@@ -12,14 +12,6 @@ api_key = os.environ["DEV_KEY"]
 
 youtube = build('youtube', 'v3', developerKey=api_key)
 
-smash_id = 'PL_hXMzbIDwY6JUkTmCCoL1BwVIDHQpnRb'
-music_id = 'PL_hXMzbIDwY4II8UXP93yd7n_HvcFg8rF'
-favs_id = 'FLtpm7glO-bH0NlP2mxldq4g'
-
-SMASH = {'name': 'smash', 'id': smash_id}
-MUSIC = {'name': 'music', 'id': music_id}
-FAVS = {'name': 'favs', 'id': favs_id}
-
 conn_conf = {'dbname': 'playlist', 'user': 'bashiron'}
 
 class Savior:
@@ -178,3 +170,13 @@ class Savior:
         """Takes playlist (dict with name and id) and saves it to database
         """
         cursor.execute('INSERT INTO "Playlists" (name, aplid) VALUES (%s, %s)', (pl['name'], pl['id']))
+
+    def add_multi_playlist(self, pls: list[tuple], cursor: psycopg.Cursor):
+        """Takes list of playlists and saves them to database
+        """
+        cursor.executemany(
+            ''' INSERT INTO "Playlists" (name, aplid)
+                VALUES (%s, %s)
+            ''',
+            pls
+        )
