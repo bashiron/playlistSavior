@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../practice_projects/python_cli/.idea/python_cli.iml" filepath="$PROJECT_DIR$/../practice_projects/python_cli/.idea/python_cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/youtubePlaylistSavior.iml" filepath="$PROJECT_DIR$/.idea/youtubePlaylistSavior.iml" />
     </modules>
   </component>

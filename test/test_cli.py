@@ -3,6 +3,7 @@ import os.path
 from definitions import PROJECT_ROOT
 from cli import cli
 from unittest import TestCase
+from unittest.mock import patch
 from click.testing import CliRunner
 
 class TestCLI(TestCase):

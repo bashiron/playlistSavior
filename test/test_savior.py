@@ -1,6 +1,5 @@
 from playlist_savior import *
 from mockdb import MockDB
-from unittest.mock import patch
 
 db = 'test_playlist'
 user = 'bashiron'

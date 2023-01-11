@@ -46,7 +46,6 @@ class MockDB(TestCase):
         except psycopg.Error as err:
             print("Data insertion to test_table failed \n" + err)
         cursor.close()
-        # TODO don't i need to run conn.commit()?
         conn.close()
 
         # patch config

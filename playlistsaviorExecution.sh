@@ -1,11 +1,13 @@
 #!/bin/bash
-#log_dir='/var/log/playlist_savior.log'
-log_dir='/home/bashiron/playlist_savior.log'
+#logfile='/var/log/playlist_savior.log'
+logfile='/home/bashiron/playlist_savior.log'
 cd /home/bashiron/bashi/projects/youtubePlaylistSavior
 source .venv/bin/activate
-echo '---' >> $log_dir
-date >> $log_dir
-echo >> $log_dir
-python src/main.py 2>&1 | tee -a $log_dir
+echo '---' >> $logfile
+date >> $logfile
+echo >> $logfile
+python src/main.py 2>&1 | tee -a $logfile
+# trim the log
+flock logfile ./trim.sh logfile
 deactivate
 exit
