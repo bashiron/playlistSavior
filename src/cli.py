@@ -33,7 +33,7 @@ def add_playlist(name, url):
     """Add a playlist to the database by providing a name and a url
     """
     pl_id = re.search(r"(?<==)(.*)", url).group(1)
-    savior.run_db_op(partial(savior.add_playlist, pl={'name': name, 'id': pl_id}))
+    savior.run_db_op(partial(savior.add_playlist, {'name': name, 'id': pl_id}))
     click.echo(f'playlist id is {pl_id}')
 
 @cli.command()

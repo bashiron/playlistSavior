@@ -58,24 +58,29 @@ class Savior:
             case []:
                 # save everything
                 fetched_pls = cursor.execute('SELECT * FROM "Playlists"').fetchall()
-                fetched_pls = list(map(lambda t: {'name': t[0], 'id': t[1]}, fetched_pls))
-                for pl in fetched_pls:
-                    self.save_playlist(pl, cursor)
 
             case _:
                 # save only listed playlists
                 fetched_pls = cursor.execute('SELECT * FROM "Playlists" WHERE name = ANY(%s)', [pls]).fetchall()
-                fetched_pls = list(map(lambda t: {'name': t[0], 'id': t[1]}, fetched_pls))
-                for pl in fetched_pls:
-                    self.save_playlist(pl, cursor)
 
-    def save_playlist(self, pl, cursor):
+        fetched_pls = list(map(lambda t: {'name': t[0], 'id': t[1]}, fetched_pls))
+        acc_exists = {} # accumulator for exists dictionaries
+        for pl in fetched_pls:
+            self.save_playlist(pl, acc_exists, cursor)
+
+        dead = [(x,) for x, y in acc_exists.items() if not y]   # elements are wrapped in a tuple for the executemany() parameter
+        self.mark_dead(dead, cursor)
+
+
+    def save_playlist(self, pl, acc, cursor):
         """Fetch video data from playlist and store in database.
 
         Parameters
         -----
         pl : `dict`
             Playlist to store video data from.
+        acc : `dict`
+            Accumulated dictionary that declares video existance.
         cursor : `psycopg.Cursor`
             Postgres cursor.
         """
@@ -92,6 +97,8 @@ class Savior:
         # thumbnail <- snippet.thumbnails.medium.url TODO dont set thumbnail yet, i have to find a way to grab the pic binary from the url and store it
 
         logger.info('received request to save {} playlist', pl['name'], kind='playlist')
+        exists = self.generate_exists(pl, cursor)
+
         next_token = False
         page = 1
         part_request = partial(youtube.playlistItems().list, part='contentDetails', playlistId=pl['id'], maxResults=50)
@@ -99,6 +106,7 @@ class Savior:
         while True:
             pl_request = part_request(pageToken=next_token) if next_token else part_request()
             pl_response = pl_request.execute()
+            # we grab the item.contentDetails.videoId not the item.id as this last one is used to identify a resource inside a playlist, not a video in the youtube database
             vid_ids = [item['contentDetails']['videoId'] for item in pl_response['items']]
 
             vid_request = youtube.videos().list(
@@ -108,14 +116,22 @@ class Savior:
 
             logger.debug('requesting raw video data... | page {}', page, kind='regular')
             vid_response = vid_request.execute()
-            self.insert_data(pl, vid_response['items'], cursor)
+            self.insert_data(pl, vid_response['items'], exists, cursor)
+            acc |= exists   # merge exists into accumulator
 
             next_token = pl_response.get('nextPageToken')
             page += 1
             if not next_token:
                 break
 
-    def insert_data(self, pl, items, cursor):
+    def generate_exists(self, pl, cursor):
+        """Grab existing videos for the playlist, these are expected to be in the final playlist
+        """
+        sql = '''SELECT apvid FROM "Videos" WHERE playlist @> '{%s}' AND alive ''' % pl['name']
+        expected = cursor.execute(sql).fetchall()  # list of one-item apvid tuples NOT list of apvids
+        return {apv[0]: False for apv in expected}  # default False = default not found
+
+    def insert_data(self, pl, items, exists, cursor):
         """Insert video data into "Videos" and "MetaRaw". If an entry with that `apvid` (video id inside youtube) already exists
         it updates the `playlist` column to also include the one where the video was found in, this is because a video can be
         in several playlists.
@@ -126,11 +142,14 @@ class Savior:
             Playlist to store videos from.
         items : `dict`
             Api video objects.
+        exists : `dict`
+            Dictionary that keeps track of video existance in the youtube database.
         cursor : `psycopg.Cursor`
             Postgres cursor.
         """
         for item in items:
             logger.info('<{}>', item['snippet']['title'], kind='display')
+            exists[item['id']] = True
             snp = self.improve_snippet(item['snippet'])
             cdt = item['contentDetails']
             try:
@@ -165,6 +184,11 @@ class Savior:
             fixed_tags = ['<none>']
         snp['tags'] = ', '.join(fixed_tags)[0:499]
         return snp
+
+    def mark_dead(self, dead: list[tuple], cursor):
+        """Mark dead videos in the database
+        """
+        cursor.executemany('UPDATE "Videos" SET alive = false WHERE apvid = (%s)', dead)
 
     def add_playlist(self, pl, cursor):
         """Takes playlist (dict with name and id) and saves it to database
