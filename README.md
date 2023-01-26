@@ -1,4 +1,10 @@
 # playlistSavior: Playlist Preservation Program
+
+<p align=left>
+<img src="https://badgen.net/github/release/bashiron/playlistSavior">
+<img src="https://badgen.net/github/last-commit/bashiron/playlistSavior">
+</p>
+
 Ever clicked into your Youtube playlist to find out (or worse, not find out) some videos were randomly removed with no heads up whatsoever? Or maybe your favorites list had an obscure, hard to track down video that you loved?
 
 playlistSavior provides a way to schedule a backup of your personal playlists so if/when they are tampered with you can ask it to remind you of the most relevant and unique data about it so you can then go look for a replacement.
